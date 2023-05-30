@@ -539,7 +539,7 @@ namespace Tetris
                     }
                 }
                 //播放消行音效
-                new Thread(() => Form1.playVoice("eliminate.wav")).Start();
+                Form1.playVoice("GotCreit.wav");
                 //显示当前的刷新行数
                 Label_Linage.Text = Convert.ToString(Convert.ToInt32(Label_Linage.Text) + Progression);
                 //显示当前的得分情况

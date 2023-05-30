@@ -37,10 +37,18 @@ namespace Tetris
 
         public static void playVoice(string file)
         {
-            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource/" + file);
-            mciSendString("open " + path + " type mpegvideo alias temp_alias", null, 0, IntPtr.Zero);
-            mciSendString("play temp_alias wait", null, 0, IntPtr.Zero);
-            mciSendString("close temp_alias ", null, 0, IntPtr.Zero);
+            //使用委托的方式才能正常播放音效
+            Thread td = new Thread((ThreadStart)delegate
+            {
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource/" + file);
+                mciSendString("open " + path + " type mpegvideo alias temp_alias", null, 0, IntPtr.Zero);
+                mciSendString("play temp_alias wait", null, 0, IntPtr.Zero);
+                mciSendString("close temp_alias ", null, 0, IntPtr.Zero);
+            });
+            td.SetApartmentState(ApartmentState.STA);
+            td.IsBackground = true;
+            td.Start();
+            
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -130,7 +138,7 @@ namespace Tetris
             {
                 timer1.Interval = 500;//恢复下移的速度
             }
-            new Thread(() => playVoice("PressKey.wav")).Start();
+            playVoice("PressKey.wav");
             textBox1.Focus();//获取焦点
             
         }
