@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -23,7 +25,24 @@ namespace Tetris
         public static bool isbegin = false;//判断当前游戏是否开始
         public bool ispause = true;//判断是否暂停游戏
         public System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
- 
+
+
+        [DllImport("winmm.dll")]
+        private static extern long mciSendString(
+             string command,      //MCI命令字符串
+             string returnString, //存放反馈信息的缓冲区
+             int returnSize,      //缓冲区的长度
+             IntPtr hwndCallback  //回调窗口的句柄，一般为NULL
+          );
+
+        public static void playVoice(string file)
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource/" + file);
+            mciSendString("open " + path + " type mpegvideo alias temp_alias", null, 0, IntPtr.Zero);
+            mciSendString("play temp_alias wait", null, 0, IntPtr.Zero);
+            mciSendString("close temp_alias ", null, 0, IntPtr.Zero);
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             MyRussia.ConvertorClear();//清空整个控件
@@ -87,7 +106,7 @@ namespace Tetris
                 MyRussia.ConvertorMove(1);//方块左移
             if (e.KeyCode == Keys.Right)//如果当前按下的是→键
                 MyRussia.ConvertorMove(2);//方块右移
-            new Thread(new ThreadStart(playKeySound)).Start();
+            
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -111,7 +130,9 @@ namespace Tetris
             {
                 timer1.Interval = 500;//恢复下移的速度
             }
+            new Thread(() => playVoice("PressKey.wav")).Start();
             textBox1.Focus();//获取焦点
+            
         }
 
         private void button2_Click(object sender, EventArgs e)

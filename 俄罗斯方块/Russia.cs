@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Threading;
 using System.Media;
 using Tetris.Properties;
+using System.Runtime.InteropServices;
 
 namespace Tetris
 {
@@ -537,14 +538,16 @@ namespace Tetris
                         MyPaint(g, new SolidBrush(PlaceColor[i, j]), rect);//绘制已落下的方块
                     }
                 }
-                new Thread(new ThreadStart(playEliminateSound)).Start();
-                
+                //播放消行音效
+                new Thread(() => Form1.playVoice("eliminate.wav")).Start();
                 //显示当前的刷新行数
                 Label_Linage.Text = Convert.ToString(Convert.ToInt32(Label_Linage.Text) + Progression);
                 //显示当前的得分情况
                 Label_Fraction.Text = Convert.ToString(Convert.ToInt32(Label_Fraction.Text) + ArrayCent[Progression - 1]);
             }
         }
+
+        
 
         public void playEliminateSound()
         {
