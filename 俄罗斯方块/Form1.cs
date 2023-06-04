@@ -5,10 +5,15 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using Tetris.Properties;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace Tetris
 {
     public partial class Form1 : Form
@@ -16,8 +21,17 @@ namespace Tetris
         public Form1()
         {
             InitializeComponent();
+            levelForm = new Form2();
+            overForm = new Form3();
+            levelForm.MyRussia = MyRussia;
+            MyRussia.overForm = overForm;
+            MyRussia.Label_Linage = label3;//将label3控件加载到Russia类中
+            MyRussia.Label_Fraction = label4;//将label4控件加载到Russia类中
+            MyRussia.Label_Level = label6;//将label5控件加载到Russia类中
         }
 
+        Form2 levelForm;
+        Form3 overForm;
         Russia MyRussia = new Russia();//实例化Russia类，用于操作游戏
         Russia TemRussia = new Russia();//实例化Russia类，用于生成下一个方块样式
         public static int CakeNO = 0;//记录下一个方块样式的标识
@@ -25,15 +39,18 @@ namespace Tetris
         public static bool isbegin = false;//判断当前游戏是否开始
         public bool ispause = true;//判断是否暂停游戏
         public System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+        SoundPlayer backgroundMusic = new SoundPlayer(Resources.Tetris);//背景音乐
+        public static int initInterval = 500;
+        public static int minInterval = 100;
 
 
         [DllImport("winmm.dll")]
         private static extern long mciSendString(
-             string command,      //MCI命令字符串
-             string returnString, //存放反馈信息的缓冲区
-             int returnSize,      //缓冲区的长度
-             IntPtr hwndCallback  //回调窗口的句柄，一般为NULL
-          );
+            string command,      //MCI命令字符串
+            string returnString, //存放反馈信息的缓冲区
+            int returnSize,      //缓冲区的长度
+            IntPtr hwndCallback  //回调窗口的句柄，一般为NULL
+        );
 
         public static void playVoice(string file)
         {
@@ -48,18 +65,16 @@ namespace Tetris
             td.SetApartmentState(ApartmentState.STA);
             td.IsBackground = true;
             td.Start();
-            
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
+            button3.Enabled = false;
             MyRussia.ConvertorClear();//清空整个控件
             MyRussia.firstPoi = new Point(140, 20);//设置方块的起始位置
             label3.Text = "0";//显示去除的行数
             label4.Text = "0";//显示分数
-            MyRussia.Label_Linage = label3;//将label3控件加载到Russia类中
-            MyRussia.Label_Fraction = label4;//将label4控件加载到Russia类中
-            timer1.Interval = 500;//下移的速度
+            
             timer1.Enabled = false;//停止计时
             timer1.Enabled = true;//开始计时
             Random rand = new Random();//实例化Random
@@ -71,6 +86,10 @@ namespace Tetris
             isbegin = true;//判断是否开始
             ispause = true;
             MyRussia.timer = timer1;
+            Task.Run(() =>
+            {
+                backgroundMusic.PlayLooping();
+            });
 
             button2.Text = "暂停";
             ispause = true;
@@ -85,16 +104,10 @@ namespace Tetris
             Graphics P3 = panel3.CreateGraphics();
             P3.FillRectangle(new SolidBrush(Color.Black), 0, 0, panel3.Width, panel3.Height);
             Random rand = new Random();//实例化Random
-            CakeNO = rand.Next(1, 8);//获取随机数
+            CakeNO = rand.Next(1, 9);//获取随机数
             TemRussia.firstPoi = new Point(50, 30);//设置方块的起始位置
             TemRussia.CakeMode(CakeNO);//设置方块的样式
             TemRussia.Protract(panel3);//绘制组合方块
-        }
-
-        public void playKeySound()
-        {
-            keySound.Play();
-            keySound.Dispose();
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -107,7 +120,8 @@ namespace Tetris
                 MyRussia.MyConvertorMode();//变换当前方块的样式
             if (e.KeyCode == Keys.Down)//如果当前按下的是↓键
             {
-                timer1.Interval = 300;//增加下移的速度
+                int interval = MyRussia.GetTimerInterval() - 200;
+                timer1.Interval = interval > minInterval ? interval : minInterval;//增加下移的速度
                 MyRussia.ConvertorMove(0);//方块下移
             }
             if (e.KeyCode == Keys.Left)//如果当前按下的是←键
@@ -119,6 +133,7 @@ namespace Tetris
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            timer1.Interval = MyRussia.GetTimerInterval();
             MyRussia.ConvertorMove(0);//方块下移
             if (become)//如果显示新的方块
             {
@@ -136,7 +151,7 @@ namespace Tetris
                 return;
             if (e.KeyCode == Keys.Down)//如果当前松开的是↓键
             {
-                timer1.Interval = 500;//恢复下移的速度
+                timer1.Interval = MyRussia.GetTimerInterval();//恢复下移的速度
             }
             playVoice("PressKey.wav");
             textBox1.Focus();//获取焦点
@@ -150,6 +165,8 @@ namespace Tetris
                 timer1.Stop();//暂停
                 button2.Text = "继续";
                 ispause = false;
+                backgroundMusic.Stop();
+                button3.Enabled = true;
                 textBox1.Focus();//获取焦点
             }
             else
@@ -157,8 +174,10 @@ namespace Tetris
                 timer1.Start();//继续
                 button2.Text = "暂停";
                 ispause = true;
+                backgroundMusic.PlayLooping();
                 textBox1.Focus();//获取焦点
             }
+
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
@@ -184,6 +203,14 @@ namespace Tetris
                 TemRussia.firstPoi = new Point(50, 30);//设置方块的起始位置
                 TemRussia.CakeMode(CakeNO);//设置方块的样式
                 TemRussia.Protract(panel3);//绘制组合方块
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (timer.Enabled == false)
+            {
+                levelForm.ShowDialog();
             }
         }
     }

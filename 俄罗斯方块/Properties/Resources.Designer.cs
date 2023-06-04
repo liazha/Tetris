@@ -77,5 +77,24 @@ namespace Tetris.Properties {
                 return ResourceManager.GetStream("PressKey", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   查找类似 No1.100
+        ///No2.90 的本地化字符串。
+        /// </summary>
+        internal static string rank {
+            get {
+                return ResourceManager.GetString("rank", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 System.IO.MemoryStream 的 System.IO.UnmanagedMemoryStream 类型的本地化资源。
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream Tetris {
+            get {
+                return ResourceManager.GetStream("Tetris", resourceCulture);
+            }
+        }
     }
 }

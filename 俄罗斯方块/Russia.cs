@@ -8,10 +8,13 @@ using System.Threading;
 using System.Media;
 using Tetris.Properties;
 using System.Runtime.InteropServices;
+using static System.Net.Mime.MediaTypeNames;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Tetris
 {
-    class Russia
+    public class Russia
     {
         public Point firstPoi = new Point(140, 20);//定义方块的起始位置
         public static Color[,] PlaceColor;//记录方块的位置
@@ -23,17 +26,26 @@ namespace Tetris
         public static int conMin = 0;//方块落下后的最小位置
         bool[] tem_Array = { false, false, false, false };//记录方块组中那一块所在行中已满
         Color ConColor = Color.Coral;
-        Point[] ArryPoi = new Point[4];//方块的数组
-        Point[] Arryfront = new Point[4];//前一个方块的数组
+        Point[] ArryPoi;
+        Point[] ArryPoiNormal = new Point[4];//方块的数组
+        Point[] ArryPoiSpecial = new Point[1];//方块的数组
+        Point[] Arryfront;
+        Point[] ArryfrontNormal = new Point[4];//前一个方块的数组
+        Point[] ArryfrontSpecial = new Point[1];//前一个方块的数组
         int Cake = 20;//定义方块的大小
         int Convertor = 0;//变换器
         Control Mycontrol = new Control();//实例化Control
         public Label Label_Linage = new Label();//实例化Label，用于显示去除的行数
         public Label Label_Fraction = new Label();//实例化Label，用于显示分数
+        public Label Label_Level = new Label();//实例化Label，用于显示关卡
         public static int[] ArrayCent = new int[] { 2, 5, 9, 15 };//记录加分情况
         public System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-
-        public SoundPlayer eliminateSound = new SoundPlayer(Resources.eliminate);
+        public int speedUp = 50;//每次下落速度增加的数量
+        public int speedUpScoreInterval = 10;//加速分数间隔
+        public int aheadScore = 0;//上一次加速分数
+        public static int maxLevel = 8;//游戏最大关卡
+        public Form3 overForm;//游戏结束弹窗
+        bool isSpecialStyle = false;
 
         /// <summary>
         /// 设置方块的样式
@@ -41,72 +53,84 @@ namespace Tetris
         /// <param n="int">标识，方块的样式</param>
         public void CakeMode(int n)
         {
-            ArryPoi[0] = firstPoi;//记录方块的起始位置
-            switch (n)//根据标识设置方块的样式
+            if (n == 8)//可穿透方块
             {
-                case 1://组合“L”方块
-                    {
-                        ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);//设置第二块方块的位置
-                        ArryPoi[2] = new Point(firstPoi.X, firstPoi.Y + Cake);//设置第三块方块的位置
-                        ArryPoi[3] = new Point(firstPoi.X + Cake, firstPoi.Y + Cake);//设置第四块方块的位置
-                        ConColor = Color.Fuchsia;//设置当前方块的颜色
-                        Convertor = 2;//记录方块的变换样式
-                        break;
-                    }
-                case 2://组合“Z”方块
-                    {
-                        ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
-                        ArryPoi[2] = new Point(firstPoi.X - Cake, firstPoi.Y - Cake);
-                        ArryPoi[3] = new Point(firstPoi.X + Cake, firstPoi.Y);
-                        ConColor = Color.Yellow;
-                        Convertor = 6;
-                        break;
-                    }
-                case 3://组合倒“L”方块
-                    {
-                        ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
-                        ArryPoi[2] = new Point(firstPoi.X, firstPoi.Y + Cake);
-                        ArryPoi[3] = new Point(firstPoi.X - Cake, firstPoi.Y + Cake);
-                        ConColor = Color.CornflowerBlue;
-                        Convertor = 8;
-                        break;
-                    }
-                case 4://组合倒“Z”方块
-                    {
-                        ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
-                        ArryPoi[2] = new Point(firstPoi.X + Cake, firstPoi.Y - Cake);
-                        ArryPoi[3] = new Point(firstPoi.X - Cake, firstPoi.Y);
-                        ConColor = Color.Blue;
-                        Convertor = 12;
-                        break;
-                    }
-                case 5://组合“T”方块
-                    {
-                        ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
-                        ArryPoi[2] = new Point(firstPoi.X + Cake, firstPoi.Y - Cake);
-                        ArryPoi[3] = new Point(firstPoi.X - Cake, firstPoi.Y - Cake);
-                        ConColor = Color.Silver;
-                        Convertor = 14;
-                        break;
-                    }
-                case 6://组合“一”方块
-                    {
-                        ArryPoi[1] = new Point(firstPoi.X + Cake, firstPoi.Y);
-                        ArryPoi[2] = new Point(firstPoi.X - Cake, firstPoi.Y);
-                        ArryPoi[3] = new Point(firstPoi.X - Cake*2, firstPoi.Y);
-                        ConColor = Color.Red;
-                        Convertor = 18;
-                        break;
-                    }
-                case 7://组合“田”方块
-                    {
-                        ArryPoi[1] = new Point(firstPoi.X - Cake, firstPoi.Y);
-                        ArryPoi[2] = new Point(firstPoi.X - Cake, firstPoi.Y - Cake);
-                        ArryPoi[3] = new Point(firstPoi.X, firstPoi.Y - Cake);
-                        ConColor = Color.LightGreen;
-                        Convertor = 19;
-                        break;
-                    }
+                isSpecialStyle = true;
+                ArryPoi = ArryPoiSpecial;
+                ArryPoi[0] = firstPoi;
+                ConColor = Color.FromArgb(125, Color.LightGreen);
+            }
+            else//正常方块
+            {
+                isSpecialStyle = false;
+                ArryPoi = ArryPoiNormal;
+                ArryPoi[0] = firstPoi;//记录方块的起始位置
+                switch (n)//根据标识设置方块的样式
+                {
+                    case 1://组合“L”方块
+                        {
+                            ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);//设置第二块方块的位置
+                            ArryPoi[2] = new Point(firstPoi.X, firstPoi.Y + Cake);//设置第三块方块的位置
+                            ArryPoi[3] = new Point(firstPoi.X + Cake, firstPoi.Y + Cake);//设置第四块方块的位置
+                            ConColor = Color.Fuchsia;//设置当前方块的颜色
+                            Convertor = 2;//记录方块的变换样式
+                            break;
+                        }
+                    case 2://组合“Z”方块
+                        {
+                            ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
+                            ArryPoi[2] = new Point(firstPoi.X - Cake, firstPoi.Y - Cake);
+                            ArryPoi[3] = new Point(firstPoi.X + Cake, firstPoi.Y);
+                            ConColor = Color.Yellow;
+                            Convertor = 6;
+                            break;
+                        }
+                    case 3://组合倒“L”方块
+                        {
+                            ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
+                            ArryPoi[2] = new Point(firstPoi.X, firstPoi.Y + Cake);
+                            ArryPoi[3] = new Point(firstPoi.X - Cake, firstPoi.Y + Cake);
+                            ConColor = Color.CornflowerBlue;
+                            Convertor = 8;
+                            break;
+                        }
+                    case 4://组合倒“Z”方块
+                        {
+                            ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
+                            ArryPoi[2] = new Point(firstPoi.X + Cake, firstPoi.Y - Cake);
+                            ArryPoi[3] = new Point(firstPoi.X - Cake, firstPoi.Y);
+                            ConColor = Color.Blue;
+                            Convertor = 12;
+                            break;
+                        }
+                    case 5://组合“T”方块
+                        {
+                            ArryPoi[1] = new Point(firstPoi.X, firstPoi.Y - Cake);
+                            ArryPoi[2] = new Point(firstPoi.X + Cake, firstPoi.Y - Cake);
+                            ArryPoi[3] = new Point(firstPoi.X - Cake, firstPoi.Y - Cake);
+                            ConColor = Color.Silver;
+                            Convertor = 14;
+                            break;
+                        }
+                    case 6://组合“一”方块
+                        {
+                            ArryPoi[1] = new Point(firstPoi.X + Cake, firstPoi.Y);
+                            ArryPoi[2] = new Point(firstPoi.X - Cake, firstPoi.Y);
+                            ArryPoi[3] = new Point(firstPoi.X - Cake * 2, firstPoi.Y);
+                            ConColor = Color.Red;
+                            Convertor = 18;
+                            break;
+                        }
+                    case 7://组合“田”方块
+                        {
+                            ArryPoi[1] = new Point(firstPoi.X - Cake, firstPoi.Y);
+                            ArryPoi[2] = new Point(firstPoi.X - Cake, firstPoi.Y - Cake);
+                            ArryPoi[3] = new Point(firstPoi.X, firstPoi.Y - Cake);
+                            ConColor = Color.LightGreen;
+                            Convertor = 19;
+                            break;
+                        }
+                }
             }
         }
 
@@ -131,8 +155,17 @@ namespace Tetris
             Graphics g = Mycontrol.CreateGraphics();//创建背景控件的Graphics类
             for (int i = 0; i < ArryPoi.Length; i++)//遍历方块的各个子方块
             {
-                Rectangle rect = new Rectangle(ArryPoi[i].X, ArryPoi[i].Y, 20, 20);//获取各子方块的区域
-                MyPaint(g, new SolidBrush(Color.Black), rect);//用背景色填充背景
+                if (isSpecialStyle)
+                {
+                    Rectangle rect = new Rectangle(ArryPoi[i].X + 1, ArryPoi[i].Y + 1, 19, 19);//获取各子方块的区域
+                    MyPaint(g, new SolidBrush(PlaceColor[ArryPoi[i].X / 20, ArryPoi[i].Y / 20]), rect);//用背景色填充背景
+                }
+                else
+                {
+                    Rectangle rect = new Rectangle(ArryPoi[i].X, ArryPoi[i].Y, 20, 20);//获取各子方块的区域
+                    MyPaint(g, new SolidBrush(Color.Black), rect);//用背景色填充背景
+                }
+                
             }
         }
 
@@ -381,6 +414,16 @@ namespace Tetris
         /// <param n="int">标识，对左右下进行判断</param>
         public void ConvertorMove(int n)
         {
+            if(isSpecialStyle)
+            {
+                Arryfront = ArryfrontSpecial;
+                ArryPoi = ArryPoiSpecial;
+            }
+            else
+            {
+                Arryfront = ArryfrontNormal;
+                ArryPoi = ArryPoiNormal;
+            }
             //记录方块移动前的位置
             for (int i = 0; i < Arryfront.Length; i++)
                 Arryfront[i] = ArryPoi[i];
@@ -403,7 +446,7 @@ namespace Tetris
                     {
                         for (int i = 0; i < Arryfront.Length; i++)
                             Arryfront[i] = new Point(Arryfront[i].X + Cake, Arryfront[i].Y);
-                        
+
                         break;
                     }
             }
@@ -412,7 +455,7 @@ namespace Tetris
             if (tem_bool)//如果没有出边界
             {
                 ConvertorDelete();//清空当前方块的区域
-                //获取移动后方块的位置
+                                  //获取移动后方块的位置
                 for (int i = 0; i < Arryfront.Length; i++)
                     ArryPoi[i] = Arryfront[i];
                 firstPoi = ArryPoi[0];//记录方块的起始位置
@@ -421,9 +464,10 @@ namespace Tetris
             else//如果方块到达底部
             {
                 if (!tem_bool && n == 0)//如果当前方块是下移
-                {                    conMax = 0;//记录方块落下后的顶端位置
+                {
+                    conMax = 0;//记录方块落下后的顶端位置
                     conMin = Mycontrol.Height;//记录方块落下后的底端位置
-                    //遍历方块的各个子方块
+                                              //遍历方块的各个子方块
                     for (int i = 0; i < ArryPoi.Length; i++)
                     {
                         if (ArryPoi[i].Y < maxY)//记录方块的顶端位置
@@ -449,19 +493,173 @@ namespace Tetris
                             MyPaint(g, new SolidBrush(PlaceColor[i, j]), rect);//绘制已落下的方块
                         }
                     }
-
+                    //游戏结束
                     if (firstPoi.X == 140 && firstPoi.Y == 20)
                     {
+                        List<int> rankList = new List<int>();
+                        rankList.Add(int.Parse(Label_Fraction.Text));
                         timer.Stop();
                         Form1.isbegin = false;
+                        //更新排行文件
+                        string rankFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource/rank.txt");
+                        if (File.Exists(rankFile))
+                        {
+                            StreamReader reader = File.OpenText(rankFile);
+                            string line;
+                            while ((line = reader.ReadLine()) != null)
+                            {
+                                if (line.Contains("."))
+                                {
+                                    int score = int.Parse(line.Split('.')[1]);
+                                    rankList.Add(score);
+                                }
+                            }
+                            reader.Close();
+                        }
+                        else
+                        {
+                            File.CreateText(rankFile);
+                        }
+                        rankList.Sort();
+                        rankList.Reverse();
+                        string allRank = "";
+                        for (int i = 0; i < rankList.Count && i < 10; i++)
+                        {
+                            allRank += "No" + (i + 1) + "." + rankList.ToArray()[i] + "\n";
+                        }
+                        overForm.UpdateLabel(Label_Fraction.Text);
+                        Console.WriteLine("overForm.Label_Fraction" + Label_Fraction);
+                        overForm.UpdateRank();
+                        overForm.ShowDialog();
+                        File.WriteAllText(rankFile, allRank);
                         return;
                     }
                     Random rand = new Random();//实例化Random
-                    int CakeNO = rand.Next(1, 8);//获取随机数
+                    int CakeNO = rand.Next(1, 9);//获取随机数
                     firstPoi = new Point(140, 20);//设置方块的起始位置
                     CakeMode(Form1.CakeNO);//设置方块的样式
                     Protract(Mycontrol);//绘制组合方块
-                    RefurbishRow(conMax,conMin);//去除已填满的行
+                    RefurbishRow(conMax, conMin);//去除已填满的行
+                    Form1.become = true;//标识，判断可以生成下一个方块
+                }
+            }
+        }
+
+        public void ConvertorMoveCopy(int n)
+        {
+            //记录方块移动前的位置
+            for (int i = 0; i < Arryfront.Length; i++)
+                Arryfront[i] = ArryPoi[i];
+            switch (n)//方块的移动方向
+            {
+                case 0://下移
+                    {
+                        //遍历方块中的子方块
+                        for (int i = 0; i < Arryfront.Length; i++)
+                            Arryfront[i] = new Point(Arryfront[i].X, Arryfront[i].Y + Cake);//使各子方块下移一个方块位
+                        break;
+                    }
+                case 1://左移
+                    {
+                        for (int i = 0; i < Arryfront.Length; i++)
+                            Arryfront[i] = new Point(Arryfront[i].X - Cake, Arryfront[i].Y);
+                        break;
+                    }
+                case 2://右移
+                    {
+                        for (int i = 0; i < Arryfront.Length; i++)
+                            Arryfront[i] = new Point(Arryfront[i].X + Cake, Arryfront[i].Y);
+
+                        break;
+                    }
+            }
+
+            bool tem_bool = MoveStop(n);//记录方块移动后是否出边界
+            if (tem_bool)//如果没有出边界
+            {
+                ConvertorDelete();//清空当前方块的区域
+                for (int i = 0; i < Arryfront.Length; i++)//获取移动后方块的位置
+                    ArryPoi[i] = Arryfront[i];
+                firstPoi = ArryPoi[0];//记录方块的起始位置
+                Protract(Mycontrol);//绘制移动后方块
+            }
+            else//如果方块到达底部
+            {
+                if (!tem_bool && n == 0)//如果当前方块是下移
+                {
+                    conMax = 0;//记录方块落下后的顶端位置
+                    conMin = Mycontrol.Height;//记录方块落下后的底端位置
+                    for (int i = 0; i < ArryPoi.Length; i++)//遍历方块的各个子方块
+                    {
+                        if (ArryPoi[i].Y < maxY)//记录方块的顶端位置
+                            maxY = ArryPoi[i].Y;
+                        Place[ArryPoi[i].X / 20, ArryPoi[i].Y / 20] = true;//记录指定的位置已存在方块
+                        PlaceColor[ArryPoi[i].X / 20, ArryPoi[i].Y / 20] = ConColor;//记录方块的颜芭
+                        if (ArryPoi[i].Y > conMax)//记录方块的顶端位置
+                            conMax = ArryPoi[i].Y;
+                        if (ArryPoi[i].Y < conMin)//记录方块的底端位置
+                            conMin = ArryPoi[i].Y;
+                    }
+                    //落到底部后改变颜色
+                    Graphics g = Mycontrol.CreateGraphics();
+                    for (int i = 0; i < PlaceColor.GetLength(0); i++)
+                    {
+                        for (int j = 0; j < PlaceColor.GetLength(1); j++)
+                        {
+                            if (PlaceColor[i, j] != Color.Black)
+                            {
+                                PlaceColor[i, j] = Color.Gray;
+                            }
+                            Rectangle rect = new Rectangle(i * Cake + 1, j * Cake + 1, 19, 19);//获取各方块的区域
+                            MyPaint(g, new SolidBrush(PlaceColor[i, j]), rect);//绘制已落下的方块
+                        }
+                    }
+                    //游戏结束
+                    if (firstPoi.X == 140 && firstPoi.Y == 20)
+                    {
+                        List<int> rankList = new List<int>();
+                        rankList.Add(int.Parse(Label_Fraction.Text));
+                        timer.Stop();
+                        Form1.isbegin = false;
+                        //更新排行文件
+                        string rankFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource/rank.txt");
+                        if (File.Exists(rankFile))
+                        {
+                            StreamReader reader = File.OpenText(rankFile);
+                            string line;
+                            while ((line = reader.ReadLine()) != null)
+                            {
+                                if (line.Contains("."))
+                                {
+                                    int score = int.Parse(line.Split('.')[1]);
+                                    rankList.Add(score);
+                                }
+                            }
+                            reader.Close();
+                        }
+                        else
+                        {
+                            File.CreateText(rankFile);
+                        }
+                        rankList.Sort();
+                        rankList.Reverse();
+                        string allRank = "";
+                        for (int i = 0; i < rankList.Count && i < 10; i++)
+                        {
+                            allRank += "No" + (i + 1) + "." + rankList.ToArray()[i] + "\n";
+                        }
+                        overForm.UpdateLabel(Label_Fraction.Text.ToString());
+                        overForm.UpdateRank();
+                        overForm.ShowDialog();
+                        File.WriteAllText(rankFile, allRank);
+                        return;
+                    }
+                    Random rand = new Random();//实例化Random
+                    int CakeNO = rand.Next(1, 9);//获取随机数
+                    firstPoi = new Point(140, 20);//设置方块的起始位置
+                    CakeMode(Form1.CakeNO);//设置方块的样式
+                    Protract(Mycontrol);//绘制组合方块
+                    RefurbishRow(conMax, conMin);//去除已填满的行
                     Form1.become = true;//标识，判断可以生成下一个方块
                 }
             }
@@ -541,18 +739,34 @@ namespace Tetris
                 //播放消行音效
                 Form1.playVoice("GotCreit.wav");
                 //显示当前的刷新行数
-                Label_Linage.Text = Convert.ToString(Convert.ToInt32(Label_Linage.Text) + Progression);
+                Label_Linage.Text = Convert.ToString(Convert.ToInt32(Label_Linage.Text) + Progression);;
                 //显示当前的得分情况
                 Label_Fraction.Text = Convert.ToString(Convert.ToInt32(Label_Fraction.Text) + ArrayCent[Progression - 1]);
+                int currentScore = int.Parse(Label_Fraction.Text) / speedUpScoreInterval;
+                //分数每增加speedUpScoreInterval，加速一次
+                if (currentScore - aheadScore > 1)
+                {
+                    aheadScore = currentScore;
+                    UpgradeGameLevel();
+                }
             }
         }
 
-        
-
-        public void playEliminateSound()
+        public int GetTimerInterval()
         {
-            eliminateSound.Play();
-            eliminateSound.Dispose();
+            int interval = Form1.initInterval - speedUp * int.Parse(Label_Level.Text);
+            return interval > Form1.minInterval ? interval : Form1.minInterval;
+        }
+
+        void UpgradeGameLevel()
+        {
+            int currentLevel = int.Parse(Label_Level.Text);
+            //判断是否超过最大关卡
+            if (currentLevel < maxLevel)
+            {
+                currentLevel += 1;
+                Label_Level.Text = currentLevel.ToString();
+            }
         }
 
         /// <summary>
@@ -581,6 +795,14 @@ namespace Tetris
         /// </summary>
         public bool MoveStop(int n)
         {
+            if (isSpecialStyle)
+            {
+                Arryfront = ArryfrontSpecial;
+            }
+            else
+            {
+                Arryfront = ArryfrontNormal;
+            }
             bool tem_bool = true;
             int tem_width = 0;
             int tem_height = 0;
@@ -593,8 +815,17 @@ namespace Tetris
                         {
                             tem_width = Arryfront[i].X / 20;//获取方块的横向坐标值
                             tem_height = Arryfront[i].Y / 20;//获取方块的纵向坐标值
-                            if (tem_height == conHeight || Place[tem_width, tem_height])//判断是否超出底边界，或是与其他方块重叠
-                                tem_bool = false;//超出边界
+                            if (isSpecialStyle)
+                            {
+                                if (tem_height == conHeight)
+                                    tem_bool = false;//超出边界
+                            }
+                            else
+                            {
+                                if (tem_height == conHeight || Place[tem_width, tem_height])//判断是否超出底边界，或是与其他方块重叠
+                                    tem_bool = false;//超出边界
+                            }
+                            
                         }
                         break;
                     }
