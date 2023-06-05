@@ -185,6 +185,7 @@ namespace Tetris
         /// <param n="int">标识，判断变换的样式</param>
         public void ConvertorMode(int n)
         {
+            if (isSpecialStyle) return;
             Point[] tem_ArrayPoi = new Point[4];//定义一个临时数组
             Point tem_Poi = firstPoi;//获取方块的起始位置
             int tem_n = n;//记录方块的下一个变换样式
