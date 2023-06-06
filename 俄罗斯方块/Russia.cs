@@ -32,7 +32,7 @@ namespace Tetris
         Point[] Arryfront;
         Point[] ArryfrontNormal = new Point[4];//前一个方块的数组
         Point[] ArryfrontSpecial = new Point[1];//前一个方块的数组
-        int Cake = 20;//定义方块的大小
+        const int Cake = 20;//定义方块的大小
         int Convertor = 0;//变换器
         Control Mycontrol = new Control();//实例化Control
         public Label Label_Linage = new Label();//实例化Label，用于显示去除的行数
@@ -158,11 +158,11 @@ namespace Tetris
                 if (isSpecialStyle)
                 {
                     Rectangle rect = new Rectangle(ArryPoi[i].X + 1, ArryPoi[i].Y + 1, 19, 19);//获取各子方块的区域
-                    MyPaint(g, new SolidBrush(PlaceColor[ArryPoi[i].X / 20, ArryPoi[i].Y / 20]), rect);//用背景色填充背景
+                    MyPaint(g, new SolidBrush(PlaceColor[ArryPoi[i].X / Cake, ArryPoi[i].Y / Cake]), rect);//用背景色填充背景
                 }
                 else
                 {
-                    Rectangle rect = new Rectangle(ArryPoi[i].X, ArryPoi[i].Y, 20, 20);//获取各子方块的区域
+                    Rectangle rect = new Rectangle(ArryPoi[i].X, ArryPoi[i].Y, Cake, Cake);//获取各子方块的区域
                     MyPaint(g, new SolidBrush(Color.Black), rect);//用背景色填充背景
                 }
                 
@@ -351,22 +351,22 @@ namespace Tetris
             //遍历方块的各个子方块
             for (int i = 0; i < tem_ArrayPoi.Length; i++)
             {
-                if (tem_ArrayPoi[i].X / 20 < 0)//变换后是否超出左边界
+                if (tem_ArrayPoi[i].X / Cake < 0)//变换后是否超出左边界
                 {
                     tem_bool = false;//不变换
                     break;
                 }
-                if (tem_ArrayPoi[i].X / 20 >= conWidth)//变换后是否超出右边界
+                if (tem_ArrayPoi[i].X / Cake >= conWidth)//变换后是否超出右边界
                 {
                     tem_bool = false;
                     break;
                 }
-                if (tem_ArrayPoi[i].Y / 20 >= conHeight)//变换后是否超出下边界
+                if (tem_ArrayPoi[i].Y / Cake >= conHeight)//变换后是否超出下边界
                 {
                     tem_bool = false;
                     break;
                 }
-                if (Place[tem_ArrayPoi[i].X / 20, tem_ArrayPoi[i].Y / 20])//变换后是否与其他方块重叠
+                if (Place[tem_ArrayPoi[i].X / Cake, tem_ArrayPoi[i].Y / Cake])//变换后是否与其他方块重叠
                 {
                     tem_bool = false;
                     break;
@@ -473,8 +473,8 @@ namespace Tetris
                     {
                         if (ArryPoi[i].Y < maxY)//记录方块的顶端位置
                             maxY = ArryPoi[i].Y;
-                        Place[ArryPoi[i].X / 20, ArryPoi[i].Y / 20] = true;//记录指定的位置已存在方块
-                        PlaceColor[ArryPoi[i].X / 20, ArryPoi[i].Y / 20] = ConColor;//记录方块的颜芭
+                        Place[ArryPoi[i].X / Cake, ArryPoi[i].Y / Cake] = true;//记录指定的位置已存在方块
+                        PlaceColor[ArryPoi[i].X / Cake, ArryPoi[i].Y / Cake] = ConColor;//记录方块的颜芭
                         if (ArryPoi[i].Y > conMax)//记录方块的顶端位置
                             conMax = ArryPoi[i].Y;
                         if (ArryPoi[i].Y < conMin)//记录方块的底端位置
@@ -552,8 +552,8 @@ namespace Tetris
         public void RefurbishRow(int Max,int Min)
         {
             Graphics g = Mycontrol.CreateGraphics();//创建背景控件的Graphics类
-            int tem_max = Max / 20;//获取方块的最大位置在多少行
-            int tem_min = Min / 20;//获取方块的最小位置在多少行
+            int tem_max = Max / Cake;//获取方块的最大位置在多少行
+            int tem_min = Min / Cake;//获取方块的最小位置在多少行
             bool tem_bool = false;
             //初始化记录刷新行的数组
             for (int i = 0; i < tem_Array.Length; i++)
@@ -587,7 +587,7 @@ namespace Tetris
                 {
                     if (tem_Array[i])//如果是刷新行
                     {
-                        Trow = Min / 20 + i;//记录最小行数
+                        Trow = Min / Cake + i;//记录最小行数
                         //将刷新行到背景顶端的区域下移
                         for (int j = Trow; j >=1 ; j--)
                         {
@@ -597,7 +597,7 @@ namespace Tetris
                                 Place[k, j] = Place[k, j - 1];//记录方块的位置
                             }
                         }
-                        Min += 20;//方块的最小位置下移一个方块位
+                        Min += Cake;//方块的最小位置下移一个方块位
                         //将背景的顶端清空
                         for (int k = 0; k < conWidth; k++)
                         {
@@ -611,7 +611,7 @@ namespace Tetris
                 //在背景中绘制刷新后的方块图案
                 for (int i = 0; i < conWidth; i++)
                 {
-                    for (int j = 0; j <= Max / 20; j++)
+                    for (int j = 0; j <= Max / Cake; j++)
                     {
                         Rectangle rect = new Rectangle(i * Cake + 1, j * Cake + 1, 19, 19);//获取各方块的区域
                         MyPaint(g, new SolidBrush(PlaceColor[i, j]), rect);//绘制已落下的方块
@@ -661,8 +661,8 @@ namespace Tetris
         /// </summary>
         public void PlaceInitialization()
         {
-            conWidth=Mycontrol.Width / 20;//获取背景的总行数
-            conHeight = Mycontrol.Height / 20;//获取背景的总列数
+            conWidth=Mycontrol.Width / Cake;//获取背景的总行数
+            conHeight = Mycontrol.Height / Cake;//获取背景的总列数
             Place = new bool[conWidth, conHeight];//定义记录各方块位置的数组
             PlaceColor = new Color[conWidth, conHeight];//定义记录各方块颜色的数组
             //对各方块的信息进行初始化
@@ -700,8 +700,8 @@ namespace Tetris
                         //遍历方块中的各个子方块
                         for (int i = 0; i < Arryfront.Length; i++)
                         {
-                            tem_width = Arryfront[i].X / 20;//获取方块的横向坐标值
-                            tem_height = Arryfront[i].Y / 20;//获取方块的纵向坐标值
+                            tem_width = Arryfront[i].X / Cake;//获取方块的横向坐标值
+                            tem_height = Arryfront[i].Y / Cake;//获取方块的纵向坐标值
                             if (isSpecialStyle)
                             {
                                 if (tem_height == conHeight)
@@ -720,8 +720,8 @@ namespace Tetris
                     {
                         for (int i = 0; i < Arryfront.Length; i++)
                         {
-                            tem_width = Arryfront[i].X / 20;
-                            tem_height = Arryfront[i].Y / 20;
+                            tem_width = Arryfront[i].X / Cake;
+                            tem_height = Arryfront[i].Y / Cake;
                             if (tem_width == -1 || Place[tem_width, tem_height])//判断是否超出左边界，或是与其他方块重叠
                                 tem_bool = false;
                         }
@@ -731,8 +731,8 @@ namespace Tetris
                     {
                         for (int i = 0; i < Arryfront.Length; i++)
                         {
-                            tem_width = Arryfront[i].X / 20;
-                            tem_height = Arryfront[i].Y / 20;
+                            tem_width = Arryfront[i].X / Cake;
+                            tem_height = Arryfront[i].Y / Cake;
                             if (tem_width == conWidth || Place[tem_width, tem_height])//判断是否超出右边界，或是与其他方块重叠
                                 tem_bool = false;
                         }
