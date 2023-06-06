@@ -28,6 +28,7 @@ namespace Tetris
             MyRussia.Label_Linage = label3;//将label3控件加载到Russia类中
             MyRussia.Label_Fraction = label4;//将label4控件加载到Russia类中
             MyRussia.Label_Level = label6;//将label5控件加载到Russia类中
+            MyRussia.backgroundMusic = this.backgroundMusic;
         }
 
         Form2 levelForm;

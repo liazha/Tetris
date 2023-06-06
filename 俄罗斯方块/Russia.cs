@@ -46,6 +46,7 @@ namespace Tetris
         public static int maxLevel = 8;//游戏最大关卡
         public Form3 overForm;//游戏结束弹窗
         bool isSpecialStyle = false;
+        public SoundPlayer backgroundMusic;
 
         /// <summary>
         /// 设置方块的样式
@@ -500,6 +501,7 @@ namespace Tetris
                         List<int> rankList = new List<int>();
                         rankList.Add(int.Parse(Label_Fraction.Text));
                         timer.Stop();
+                        backgroundMusic.Stop();
                         Form1.isbegin = false;
                         //更新排行文件
                         string rankFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource/rank.txt");
