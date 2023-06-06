@@ -546,126 +546,6 @@ namespace Tetris
             }
         }
 
-        public void ConvertorMoveCopy(int n)
-        {
-            //记录方块移动前的位置
-            for (int i = 0; i < Arryfront.Length; i++)
-                Arryfront[i] = ArryPoi[i];
-            switch (n)//方块的移动方向
-            {
-                case 0://下移
-                    {
-                        //遍历方块中的子方块
-                        for (int i = 0; i < Arryfront.Length; i++)
-                            Arryfront[i] = new Point(Arryfront[i].X, Arryfront[i].Y + Cake);//使各子方块下移一个方块位
-                        break;
-                    }
-                case 1://左移
-                    {
-                        for (int i = 0; i < Arryfront.Length; i++)
-                            Arryfront[i] = new Point(Arryfront[i].X - Cake, Arryfront[i].Y);
-                        break;
-                    }
-                case 2://右移
-                    {
-                        for (int i = 0; i < Arryfront.Length; i++)
-                            Arryfront[i] = new Point(Arryfront[i].X + Cake, Arryfront[i].Y);
-
-                        break;
-                    }
-            }
-
-            bool tem_bool = MoveStop(n);//记录方块移动后是否出边界
-            if (tem_bool)//如果没有出边界
-            {
-                ConvertorDelete();//清空当前方块的区域
-                for (int i = 0; i < Arryfront.Length; i++)//获取移动后方块的位置
-                    ArryPoi[i] = Arryfront[i];
-                firstPoi = ArryPoi[0];//记录方块的起始位置
-                Protract(Mycontrol);//绘制移动后方块
-            }
-            else//如果方块到达底部
-            {
-                if (!tem_bool && n == 0)//如果当前方块是下移
-                {
-                    conMax = 0;//记录方块落下后的顶端位置
-                    conMin = Mycontrol.Height;//记录方块落下后的底端位置
-                    for (int i = 0; i < ArryPoi.Length; i++)//遍历方块的各个子方块
-                    {
-                        if (ArryPoi[i].Y < maxY)//记录方块的顶端位置
-                            maxY = ArryPoi[i].Y;
-                        Place[ArryPoi[i].X / 20, ArryPoi[i].Y / 20] = true;//记录指定的位置已存在方块
-                        PlaceColor[ArryPoi[i].X / 20, ArryPoi[i].Y / 20] = ConColor;//记录方块的颜芭
-                        if (ArryPoi[i].Y > conMax)//记录方块的顶端位置
-                            conMax = ArryPoi[i].Y;
-                        if (ArryPoi[i].Y < conMin)//记录方块的底端位置
-                            conMin = ArryPoi[i].Y;
-                    }
-                    //落到底部后改变颜色
-                    Graphics g = Mycontrol.CreateGraphics();
-                    for (int i = 0; i < PlaceColor.GetLength(0); i++)
-                    {
-                        for (int j = 0; j < PlaceColor.GetLength(1); j++)
-                        {
-                            if (PlaceColor[i, j] != Color.Black)
-                            {
-                                PlaceColor[i, j] = Color.Gray;
-                            }
-                            Rectangle rect = new Rectangle(i * Cake + 1, j * Cake + 1, 19, 19);//获取各方块的区域
-                            MyPaint(g, new SolidBrush(PlaceColor[i, j]), rect);//绘制已落下的方块
-                        }
-                    }
-                    //游戏结束
-                    if (firstPoi.X == 140 && firstPoi.Y == 20)
-                    {
-                        List<int> rankList = new List<int>();
-                        rankList.Add(int.Parse(Label_Fraction.Text));
-                        timer.Stop();
-                        Form1.isbegin = false;
-                        //更新排行文件
-                        string rankFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource/rank.txt");
-                        if (File.Exists(rankFile))
-                        {
-                            StreamReader reader = File.OpenText(rankFile);
-                            string line;
-                            while ((line = reader.ReadLine()) != null)
-                            {
-                                if (line.Contains("."))
-                                {
-                                    int score = int.Parse(line.Split('.')[1]);
-                                    rankList.Add(score);
-                                }
-                            }
-                            reader.Close();
-                        }
-                        else
-                        {
-                            File.CreateText(rankFile);
-                        }
-                        rankList.Sort();
-                        rankList.Reverse();
-                        string allRank = "";
-                        for (int i = 0; i < rankList.Count && i < 10; i++)
-                        {
-                            allRank += "No" + (i + 1) + "." + rankList.ToArray()[i] + "\n";
-                        }
-                        overForm.UpdateLabel(Label_Fraction.Text.ToString());
-                        overForm.UpdateRank();
-                        overForm.ShowDialog();
-                        File.WriteAllText(rankFile, allRank);
-                        return;
-                    }
-                    Random rand = new Random();//实例化Random
-                    int CakeNO = rand.Next(1, 9);//获取随机数
-                    firstPoi = new Point(140, 20);//设置方块的起始位置
-                    CakeMode(Form1.CakeNO);//设置方块的样式
-                    Protract(Mycontrol);//绘制组合方块
-                    RefurbishRow(conMax, conMin);//去除已填满的行
-                    Form1.become = true;//标识，判断可以生成下一个方块
-                }
-            }
-        }
-
         /// <summary>
         /// 去除已添满的行
         /// </summary>
@@ -753,12 +633,18 @@ namespace Tetris
             }
         }
 
+        /// <summary>
+        /// 获取节拍器频率
+        /// </summary>
         public int GetTimerInterval()
         {
             int interval = Form1.initInterval - speedUp * int.Parse(Label_Level.Text);
             return interval > Form1.minInterval ? interval : Form1.minInterval;
         }
 
+        /// <summary>
+        /// 升级关卡
+        /// </summary>
         void UpgradeGameLevel()
         {
             int currentLevel = int.Parse(Label_Level.Text);
