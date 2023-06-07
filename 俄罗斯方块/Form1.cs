@@ -87,10 +87,7 @@ namespace Tetris
             isbegin = true;//判断是否开始
             ispause = true;
             MyRussia.timer = timer1;
-            Task.Run(() =>
-            {
-                backgroundMusic.PlayLooping();
-            });
+            backgroundMusic.PlayLooping();
 
             button2.Text = "暂停";
             ispause = true;
