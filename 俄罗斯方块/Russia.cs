@@ -537,8 +537,6 @@ namespace Tetris
                         File.WriteAllText(rankFile, allRank);
                         return;
                     }
-                    Random rand = new Random();//实例化Random
-                    int CakeNO = rand.Next(1, 9);//获取随机数
                     firstPoi = new Point(140, 20);//设置方块的起始位置
                     CakeMode(Form1.CakeNO);//设置方块的样式
                     Protract(Mycontrol);//绘制组合方块

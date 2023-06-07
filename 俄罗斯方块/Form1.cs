@@ -41,8 +41,8 @@ namespace Tetris
         public bool ispause = true;//判断是否暂停游戏
         public System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
         SoundPlayer backgroundMusic = new SoundPlayer(Resources.Tetris);//背景音乐
-        public static int initInterval = 500;
-        public static int minInterval = 100;
+        public static int initInterval = 500;//默认节拍器间隔
+        public static int minInterval = 100;//最小节拍器间隔
 
 
         [DllImport("winmm.dll")]
@@ -68,6 +68,9 @@ namespace Tetris
             td.Start();
         }
 
+        /// <summary>
+        /// 开始按键
+        /// </summary>
         private void button1_Click(object sender, EventArgs e)
         {
             button3.Enabled = false;
@@ -151,11 +154,14 @@ namespace Tetris
             {
                 timer1.Interval = MyRussia.GetTimerInterval();//恢复下移的速度
             }
-            playVoice("PressKey.wav");
+            playVoice("PressKey.wav");//播放按键音效
             textBox1.Focus();//获取焦点
             
         }
 
+        /// <summary>
+        /// 暂停/继续按键
+        /// </summary>
         private void button2_Click(object sender, EventArgs e)
         {
             if (timer1.Enabled == true)
@@ -163,7 +169,7 @@ namespace Tetris
                 timer1.Stop();//暂停
                 button2.Text = "继续";
                 ispause = false;
-                backgroundMusic.Stop();
+                backgroundMusic.Stop();//暂停背景音效
                 button3.Enabled = true;
                 textBox1.Focus();//获取焦点
             }
@@ -172,12 +178,15 @@ namespace Tetris
                 timer1.Start();//继续
                 button2.Text = "暂停";
                 ispause = true;
-                backgroundMusic.PlayLooping();
+                backgroundMusic.PlayLooping();//播放背景音效
                 textBox1.Focus();//获取焦点
             }
 
         }
 
+        /// <summary>
+        /// 绘制主屏
+        /// </summary>
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
             if (isbegin)//如是游戏开始
@@ -194,6 +203,9 @@ namespace Tetris
             }
         }
 
+        /// <summary>
+        /// 绘制下一个方块
+        /// </summary>
         private void panel3_Paint(object sender, PaintEventArgs e)
         {
             if (isbegin)//如果游戏开始
@@ -204,11 +216,14 @@ namespace Tetris
             }
         }
 
+        /// <summary>
+        /// 关卡按键
+        /// </summary>
         private void button3_Click(object sender, EventArgs e)
         {
             if (timer.Enabled == false)
             {
-                levelForm.ShowDialog();
+                levelForm.ShowDialog();//调整游戏等级
             }
         }
     }
